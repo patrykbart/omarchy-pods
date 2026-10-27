@@ -90,12 +90,17 @@ bool PulseAudioController::initialize()
     // including AVRCP AbsoluteVolume writes from the AirPods stem.
     // snapSinkInfoCallback (invoked indirectly by subscribeCallback)
     // does the actual 5%-grid snap when m_snapSinkName is set.
-    // Subscribe-mask covers SINK events only; we don't care about
-    // sink-input / source / card / etc. for the snap path.
+    // CARD events carry profile switches, which the status file reports.
     pa_context_set_subscribe_callback(m_context, &PulseAudioController::subscribeCallback, this);
     pa_operation *subOp = pa_context_subscribe(
-        m_context, PA_SUBSCRIPTION_MASK_SINK, nullptr, nullptr);
+        m_context, static_cast<pa_subscription_mask_t>(PA_SUBSCRIPTION_MASK_SINK | PA_SUBSCRIPTION_MASK_CARD),
+        nullptr, nullptr);
     if (subOp) pa_operation_unref(subOp);
+
+    // A card already in its profile at startup never fires a change, so read every card once.
+    pa_operation *seedOp = pa_context_get_card_info_list(
+        m_context, &PulseAudioController::cardProfileInfoCallback, this);
+    if (seedOp) pa_operation_unref(seedOp);
 
     pa_threaded_mainloop_unlock(m_mainloop);
     m_initialized = true;
@@ -230,7 +235,7 @@ void PulseAudioController::subscribeCallback(pa_context *c,
                                              uint32_t idx, void *userdata)
 {
     PulseAudioController *self = static_cast<PulseAudioController*>(userdata);
-    if (!self || self->m_snapSinkName.isEmpty()) return;
+    if (!self) return;
 
     // Only handle sink-change events; new/remove fire on hotplug
     // and don't carry the volume we care about. PA delivers
@@ -240,6 +245,14 @@ void PulseAudioController::subscribeCallback(pa_context *c,
         type & PA_SUBSCRIPTION_EVENT_FACILITY_MASK);
     const auto event = static_cast<pa_subscription_event_type_t>(
         type & PA_SUBSCRIPTION_EVENT_TYPE_MASK);
+    // A removed card can no longer be queried, and the status file gates the profile on the audio link.
+    if (facility == PA_SUBSCRIPTION_EVENT_CARD && event != PA_SUBSCRIPTION_EVENT_REMOVE) {
+        pa_operation *op = pa_context_get_card_info_by_index(
+            c, idx, &PulseAudioController::cardProfileInfoCallback, self);
+        if (op) pa_operation_unref(op);
+        return;
+    }
+    if (self->m_snapSinkName.isEmpty()) return;
     if (facility != PA_SUBSCRIPTION_EVENT_SINK) return;
     if (event != PA_SUBSCRIPTION_EVENT_CHANGE) return;
 
@@ -250,6 +263,22 @@ void PulseAudioController::subscribeCallback(pa_context *c,
     pa_operation *op = pa_context_get_sink_info_by_index(
         c, idx, &PulseAudioController::snapSinkInfoCallback, self);
     if (op) pa_operation_unref(op);
+}
+
+void PulseAudioController::cardProfileInfoCallback(pa_context *c,
+                                                   const pa_card_info *info,
+                                                   int eol, void *userdata)
+{
+    if (eol < 0) {
+        LOG_WARN("PulseAudio card query failed: " << pa_strerror(pa_context_errno(c)));
+        return;
+    }
+    if (eol > 0 || !info) return;
+    PulseAudioController *self = static_cast<PulseAudioController*>(userdata);
+    const pa_card_profile_info2 *active = info->active_profile2;
+    emit self->cardProfileChanged(QString::fromUtf8(info->name),
+                                  active ? QString::fromUtf8(active->name) : QString(),
+                                  active ? QString::fromUtf8(active->description) : QString());
 }
 
 void PulseAudioController::snapSinkInfoCallback(pa_context *c,

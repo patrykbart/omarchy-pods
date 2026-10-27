@@ -50,6 +50,8 @@ does not use it, and runs `librepods-ctl` only for the control verbs below.
 | `supports_one_bud_anc` | bool | noise control and a second bud, so never on a Max |
 | `ear_detection_behavior` | int | 0 pause when one is out, 1 when both are out, 2 never |
 | `lid_state` | int | 0 open, 1 closed, 2 unknown |
+| `audio_profile` | string | the AirPods card's active PipeWire profile, `a2dp-*` for music or `headset-*` while an app holds the mic; empty while `connected` is false or before the card is reported |
+| `audio_codec` | string | that profile's codec, `SBC-XQ`, `AAC`, `CVSD` and so on, read from the profile name and then its description, because the bare `a2dp-sink` and `headset-head-unit` names carry none |
 
 The line arrives with **keys sorted alphabetically**, not in the daemon's insert
 order, because `QJsonObject` sorts. Anything reading the line positionally, or a

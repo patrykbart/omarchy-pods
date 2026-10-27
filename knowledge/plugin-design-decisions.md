@@ -44,6 +44,11 @@ row switching A2DP against HFP would be genuinely AirPods-specific, but
 PipeWire already switches profiles when an application opens the source, so it
 would be a knob nobody turns.
 
+What the panel does show is a read-only Audio row, `Music · SBC-XQ` or
+`Call · CVSD`, from the daemon's `audio_profile` and `audio_codec`. It changes
+nothing. It exists because the switch PipeWire makes is otherwise invisible,
+and it explains why playback drops to call quality while an app holds the mic.
+
 # No polling at all, measured
 
 The panel watches `$XDG_STATE_HOME/librepods/status.json` with a `FileView` and

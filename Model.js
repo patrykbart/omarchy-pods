@@ -59,6 +59,8 @@ function defaultStatus() {
     conversationalAwareness: false,
     earDetectionBehavior: EAR_PAUSE_ONE_OUT,
     lidState: LID_UNKNOWN,
+    audioProfile: "",
+    audioCodec: "",
     left: defaultPod(),
     right: defaultPod(),
     caseBattery: { level: LEVEL_UNKNOWN, charging: false },
@@ -102,6 +104,7 @@ function podFrom(raw) {
 //  "right":{"available":true,"charging":true,"in_ear":false,"level":100},
 //  "schema_version":1,"supports_adaptive":true,"supports_conversational_awareness":true,
 //  "supports_noise_control":true,"supports_noise_off":false,"supports_one_bud_anc":true}
+// A daemon that reports the card adds "audio_codec":"SBC-XQ","audio_profile":"a2dp-sink-sbc_xq", both "" without an audio link.
 // A headset (AirPods Max) instead sends "is_headset":true and "headset":{"available":true,"charging":false,"level":100}, with no pods and no case.
 function parseStatus(raw) {
   var status = defaultStatus()
@@ -151,6 +154,8 @@ function parseStatus(raw) {
   status.conversationalAwareness = parsed.conversational_awareness === true
   status.earDetectionBehavior = intOr(parsed.ear_detection_behavior, EAR_PAUSE_ONE_OUT)
   status.lidState = intOr(parsed.lid_state, LID_UNKNOWN)
+  status.audioProfile = String(parsed.audio_profile || "")
+  status.audioCodec = String(parsed.audio_codec || "")
   status.left = podFrom(parsed.left)
   status.right = podFrom(parsed.right)
   var caseRaw = podFrom(parsed["case"])
@@ -198,6 +203,15 @@ function earDetectionName(behavior) {
   if (behavior === EAR_PAUSE_BOTH_OUT) return "Pause when both are out"
   if (behavior === EAR_DISABLED) return "Never pause"
   return "Unknown"
+}
+
+// Sample input: "headset-head-unit", "CVSD". Only the headset profiles carry the mic, and they replace the music one.
+function audioModeText(profile, codec) {
+  var mode = ""
+  if (profile.indexOf("a2dp-") === 0) mode = "Music"
+  else if (profile.indexOf("headset-") === 0) mode = "Call"
+  if (mode === "" || codec === "") return mode
+  return mode + " · " + codec
 }
 
 function levelText(level) {

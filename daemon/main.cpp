@@ -1758,6 +1758,10 @@ public:
         status.insert("supports_adaptive", d ? supportsAdaptiveAudio(d->model()) : false);
         status.insert("supports_conversational_awareness", d ? supportsConversationalAwareness(d->model()) : false);
         status.insert("supports_one_bud_anc", d ? supportsOneBudANC(d->model()) : false);
+        // A card left over from the last link would otherwise read as live.
+        const bool linked = areAirpodsConnected();
+        status.insert("audio_profile", linked ? mediaController->activeAudioProfile() : QString());
+        status.insert("audio_codec", linked ? mediaController->activeAudioCodec() : QString());
         // Raw "A<NNNN>" code from the AAP metadata packet. Useful
         // for debugging new/unrecognized models — if a fresh
         // device sends a code that isn't in parseModelNumber's

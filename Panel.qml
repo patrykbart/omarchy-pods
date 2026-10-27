@@ -52,6 +52,7 @@ Panel {
   readonly property bool caVisible: pods.hasAirPods && pods.supportsConversationalAwareness
   readonly property bool oneBudVisible: pods.hasAirPods && pods.supportsOneBudANC
   readonly property string lidLabel: Model.lidText(pods.lidState)
+  readonly property string audioModeLabel: Model.audioModeText(pods.audioProfile, pods.audioCodec)
 
   // The daemon names the family, so the mark is the shape of the device actually connected.
   readonly property string podsVariant: pods.isHeadset ? "max" : pods.isProSeries ? "pro" : "buds"
@@ -353,6 +354,14 @@ Panel {
               label: "Ear detection"
               value: Model.earDetectionName(pods.earDetectionBehavior)
             }
+
+            // A readout, not a control: PipeWire switches to the headset profile when an app opens the mic.
+            InfoRow {
+              visible: root.audioModeLabel !== ""
+              width: parent.width
+              label: "Audio"
+              value: root.audioModeLabel
+            }
           }
 
           Text {
@@ -620,6 +629,43 @@ Panel {
       Text {
         textFormat: Text.PlainText
         text: valueRow.value
+        color: root.dim
+        font.family: root.fontFamily
+        font.pixelSize: Style.font.bodySmall
+        elide: Text.ElideRight
+      }
+    }
+  }
+
+  component InfoRow: Item {
+    id: infoRow
+    property string label: ""
+    property string value: ""
+
+    implicitHeight: infoLabel.implicitHeight + Style.spacing.rowPaddingX
+
+    RowLayout {
+      anchors.left: parent.left
+      anchors.right: parent.right
+      anchors.verticalCenter: parent.verticalCenter
+      anchors.leftMargin: Style.space(10)
+      anchors.rightMargin: Style.space(10)
+      spacing: Style.space(8)
+
+      Text {
+        textFormat: Text.PlainText
+        id: infoLabel
+        Layout.fillWidth: true
+        text: infoRow.label
+        color: root.foreground
+        font.family: root.fontFamily
+        font.pixelSize: Style.font.body
+        elide: Text.ElideRight
+      }
+
+      Text {
+        textFormat: Text.PlainText
+        text: infoRow.value
         color: root.dim
         font.family: root.fontFamily
         font.pixelSize: Style.font.bodySmall

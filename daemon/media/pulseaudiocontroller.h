@@ -58,6 +58,10 @@ public:
     // Every profile this card reports, for the pure choice in profilechoice.hpp.
     QVector<ProfileCandidate> getCardProfiles(const QString &cardName);
 
+Q_SIGNALS:
+    // Emitted on the PulseAudio mainloop thread, so a receiver on the Qt thread gets it queued.
+    void cardProfileChanged(const QString &cardName, const QString &profileName, const QString &description);
+
 private:
     pa_threaded_mainloop *m_mainloop = nullptr;
     pa_context *m_context = nullptr;
@@ -83,6 +87,7 @@ private:
     // only gets event-type + sink-index, not the new volume.
     static void subscribeCallback(pa_context *c, pa_subscription_event_type_t type, uint32_t idx, void *userdata);
     static void snapSinkInfoCallback(pa_context *c, const pa_sink_info *info, int eol, void *userdata);
+    static void cardProfileInfoCallback(pa_context *c, const pa_card_info *info, int eol, void *userdata);
 
     bool waitForOperation(pa_operation *op);
 };

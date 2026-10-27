@@ -16,6 +16,7 @@ private slots:
     void returnsEmptyWhenNothingQualifies();
     void readsTheCodecOutOfAProfileDescription();
     void readsTheCodecOutOfTheProfileNameToo();
+    void readsTheActiveCodecFromTheNameThenTheDescription();
 };
 
 static QVector<ProfileCandidate> airPodsCard()
@@ -153,6 +154,16 @@ void TestProfileChoice::readsTheCodecOutOfTheProfileNameToo()
         {"a2dp-sink-sbc_xq", "Reproduccion de alta fidelidad (A2DP Sink)", 131, true, 1, 0},
     };
     QCOMPARE(bestPlaybackProfile(translated), QString("a2dp-sink-sbc_xq"));
+}
+
+void TestProfileChoice::readsTheActiveCodecFromTheNameThenTheDescription()
+{
+    QCOMPARE(activeCodec("a2dp-sink-sbc_xq", "High Fidelity Playback (A2DP Sink, codec SBC-XQ)"), QString("SBC-XQ"));
+    // The bare names hide the codec, so only the description can say AAC or CVSD.
+    QCOMPARE(activeCodec("a2dp-sink", "High Fidelity Playback (A2DP Sink, codec AAC)"), QString("AAC"));
+    QCOMPARE(activeCodec("headset-head-unit", "Headset Head Unit (HSP/HFP, codec CVSD)"), QString("CVSD"));
+    QCOMPARE(activeCodec("headset-head-unit-msbc", "Headset Head Unit (HSP/HFP, codec MSBC)"), QString("MSBC"));
+    QVERIFY(activeCodec("off", "Off").isEmpty());
 }
 
 QTEST_GUILESS_MAIN(TestProfileChoice)

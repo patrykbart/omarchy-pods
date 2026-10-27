@@ -50,6 +50,13 @@ inline QString codecFromProfileName(const QString &name)
     return suffix.toUpper().replace('_', '-');
 }
 
+// Sample input: "headset-head-unit", "Headset Head Unit (HSP/HFP, codec CVSD)"
+inline QString activeCodec(const QString &name, const QString &description)
+{
+    const QString fromName = codecFromProfileName(name);
+    return fromName.isEmpty() ? codecFromDescription(description) : fromName;
+}
+
 // Description PulseAudio gave this profile, empty when the card does not have it.
 inline QString profileDescription(const QVector<ProfileCandidate> &candidates, const QString &name)
 {

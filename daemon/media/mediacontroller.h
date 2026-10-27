@@ -1,6 +1,7 @@
 #ifndef MEDIACONTROLLER_H
 #define MEDIACONTROLLER_H
 
+#include <QHash>
 #include <QObject>
 #include "pulseaudiocontroller.h"
 
@@ -42,6 +43,9 @@ public:
   bool isA2dpProfileAvailable();
   QString getPreferredA2dpProfile();
   QString getActiveProfile();
+  // Both empty until PulseAudio has reported the AirPods card.
+  QString activeAudioProfile() const;
+  QString activeAudioCodec() const;
   bool restartWirePlumber();
 
   void setEarDetectionBehavior(EarDetectionBehavior behavior);
@@ -70,6 +74,9 @@ private:
   PlayerStatusWatcher *playerStatusWatcher = nullptr;
   PulseAudioController *m_pulseAudio = nullptr;
   QString m_cachedA2dpProfile;
+  struct CardProfile { QString name; QString codec; };
+  // Keyed by card name, because the AirPods card can be reported before its address is known.
+  QHash<QString, CardProfile> m_cardProfiles;
   quint64 m_earDetectionGeneration = 0;
   bool m_earOutPending = false;
   // A queued retry compares its captured generation against this, so a superseded chain stops.

@@ -3,7 +3,7 @@
 
 const source = Deno.readTextFileSync(new URL("../Model.js", import.meta.url))
 const Model = new Function(
-  source + "; return { parseStatus, podFrom, defaultPod, noiseModeVerb, earDetectionVerb, levelFraction, levelText, podMeta, elideError, availableModes, NOISE_OFF, NOISE_ANC, NOISE_TRANSPARENCY, NOISE_ADAPTIVE, LEVEL_UNKNOWN, NOISE_UNKNOWN, EAR_PAUSE_ONE_OUT, LID_UNKNOWN, MAX_ERROR_CHARS }"
+  source + "; return { parseStatus, podFrom, defaultPod, noiseModeVerb, earDetectionVerb, levelFraction, levelText, podMeta, elideError, availableModes, audioModeText, NOISE_OFF, NOISE_ANC, NOISE_TRANSPARENCY, NOISE_ADAPTIVE, LEVEL_UNKNOWN, NOISE_UNKNOWN, EAR_PAUSE_ONE_OUT, LID_UNKNOWN, MAX_ERROR_CHARS }"
 )()
 
 let failures = 0
@@ -136,6 +136,15 @@ check("a Pro 3 loses Off and keeps Adaptive", modesFor(good),
   [Model.NOISE_TRANSPARENCY, Model.NOISE_ADAPTIVE, Model.NOISE_ANC])
 check("a Max 2 gets all four", modesFor(max2),
   [Model.NOISE_OFF, Model.NOISE_TRANSPARENCY, Model.NOISE_ADAPTIVE, Model.NOISE_ANC])
+
+const withAudio = Model.parseStatus(live.replace('"schema_version":1', '"audio_codec":"CVSD","audio_profile":"headset-head-unit","schema_version":1'))
+check("audio keys are read", [withAudio.audioProfile, withAudio.audioCodec], ["headset-head-unit", "CVSD"])
+check("a daemon without the audio keys reads as unknown", [good.audioProfile, good.audioCodec], ["", ""])
+check("a headset profile is a call", Model.audioModeText("headset-head-unit", "CVSD"), "Call · CVSD")
+check("an A2DP profile is music", Model.audioModeText("a2dp-sink-sbc_xq", "SBC-XQ"), "Music · SBC-XQ")
+check("a codec the daemon could not name leaves the mode alone", Model.audioModeText("a2dp-sink", ""), "Music")
+check("the off profile draws no row", Model.audioModeText("off", ""), "")
+check("no profile draws no row", Model.audioModeText("", ""), "")
 
 if (failures > 0) {
   console.log(failures + " failed")

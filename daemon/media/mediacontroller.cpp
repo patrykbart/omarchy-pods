@@ -20,6 +20,10 @@ static constexpr int bothPodsOutSettleMs = 1200;
 
 MediaController::MediaController(QObject *parent) : QObject(parent) {
   m_pulseAudio = new PulseAudioController(this);
+  connect(m_pulseAudio, &PulseAudioController::cardProfileChanged, this,
+          [this](const QString &cardName, const QString &profileName, const QString &description) {
+            m_cardProfiles.insert(cardName, {profileName, activeCodec(profileName, description)});
+          });
   if (!m_pulseAudio->initialize())
   {
     LOG_ERROR("Failed to initialize PulseAudio controller");
@@ -357,6 +361,14 @@ void MediaController::attemptA2dpActivation(const QString &macAddress, quint64 g
 QString MediaController::getActiveProfile() {
   if (m_deviceOutputName.isEmpty()) return QString();
   return m_pulseAudio->getActiveCardProfile(m_deviceOutputName);
+}
+
+QString MediaController::activeAudioProfile() const {
+  return m_cardProfiles.value(m_deviceOutputName).name;
+}
+
+QString MediaController::activeAudioCodec() const {
+  return m_cardProfiles.value(m_deviceOutputName).codec;
 }
 
 void MediaController::removeAudioOutputDevice() {

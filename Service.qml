@@ -25,6 +25,8 @@ Item {
   property bool conversationalAwareness: false
   property int earDetectionBehavior: Model.EAR_PAUSE_ONE_OUT
   property int lidState: Model.LID_UNKNOWN
+  property string audioProfile: ""
+  property string audioCodec: ""
   property bool schemaUnsupported: false
   property var leftPod: Model.defaultPod()
   property var rightPod: Model.defaultPod()
@@ -109,6 +111,8 @@ Item {
     caseBattery = status.caseBattery
     headsetBattery = status.headset
     lidState = status.lidState
+    audioProfile = status.audioProfile
+    audioCodec = status.audioCodec
 
     noiseMode = _settle("noiseMode", status.noiseMode)
     adaptiveNoiseLevel = _settle("adaptiveNoiseLevel", status.adaptiveNoiseLevel)

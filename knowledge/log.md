@@ -61,3 +61,12 @@ than quietly rewritten.
 - Two claims that looked like defects and were not, both settled on the box: the
   daemon does remove `status.json` when systemd stops it, and a `FileView` does
   pick up a file created after the shell started.
+
+## 2026-10-27
+
+- `librepods-status-schema`: added `audio_profile` and `audio_codec`. On an
+  AirPods Pro 2 (USB-C), opening the mic with `parecord` moved the file from
+  `a2dp-sink-sbc_xq`/`SBC-XQ` to `headset-head-unit`/`CVSD` and back after it
+  closed, both matching `pactl list cards`.
+- `plugin-design-decisions`: the read-only Audio row, and why it does not
+  reopen the rejected profile switch.
